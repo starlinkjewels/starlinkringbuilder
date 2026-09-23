@@ -199,12 +199,7 @@ export function ShapeIcon({ shape }: { shape: string }) {
 export function Rotate360Icon({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M20 12a8 8 0 1 1-2.34-5.66"
-        stroke={A}
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
+      <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke={A} strokeWidth="1.6" strokeLinecap="round" />
       <path
         d="M20 3v5h-5"
         stroke={A}

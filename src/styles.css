@@ -64,7 +64,8 @@
   --brand-tint: #e8eef8;
   --night: #0f1a33;
 
-  --header-h: 68px;
+  --topbar-h: 32px;
+  --header-h: 64px;
   --bar-h: 92px;
   --gutter: clamp(1.15rem, 3.4vw, 3rem);
 
@@ -170,17 +171,59 @@
 .site-header {
   position: relative;
   z-index: 30;
-  height: var(--header-h);
   flex: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+
+/* Contact strip: navy band, as on the main store. */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--topbar-h);
+  padding-inline: var(--gutter);
+  background: var(--night);
+  color: rgb(255 255 255 / 78%);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.topbar__contact {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.topbar a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.topbar a:hover {
+  color: #fff;
+}
+
+.topbar__note {
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 58%);
+}
+
+.site-header__main {
+  height: var(--header-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding-inline: var(--gutter);
-  /* Light, so the sapphire logo reads at full strength. */
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  color: var(--ink);
 }
 
 .brand {
@@ -207,6 +250,23 @@
   color: var(--ink-soft);
 }
 
+.nav-link {
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
 .bag-btn {
   display: inline-flex;
   align-items: center;
@@ -222,7 +282,8 @@
   cursor: pointer;
   transition:
     border-color 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .bag-btn:hover {
@@ -336,12 +397,6 @@
     transform 0.2s ease;
 }
 
-.thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .thumb:hover {
   border-color: var(--line-strong);
   transform: translateY(-1px);
@@ -382,35 +437,27 @@
   touch-action: pan-y;
 }
 
-.viewer-image,
 .glb-viewer-shell,
 .glb-canvas {
   position: absolute;
   inset: 0;
 }
 
-.viewer-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  user-select: none;
-}
-
-.viewer-poster {
-  transition: opacity 0.5s ease;
-}
-
-.viewer-poster--hidden {
-  opacity: 0;
-}
-
 .glb-canvas {
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transition:
+    opacity 0.6s ease,
+    filter 0.4s ease;
 }
 
 .glb-canvas--ready {
   opacity: 1;
+}
+
+/* The previous ring stays in view, softened, while the next one loads. */
+.glb-canvas--dim {
+  opacity: 0.4;
+  filter: blur(2px) saturate(0.7);
 }
 
 .glb-model {
@@ -419,36 +466,175 @@
   display: block;
 }
 
-.glb-status {
+/* ----------------------------------------------------------------- loader */
+
+.ring-loader {
   position: absolute;
-  left: 50%;
-  bottom: 1.4rem;
-  transform: translateX(-50%);
+  inset: 0;
   z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.6rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.9rem;
+  pointer-events: none;
+  animation: loader-in 0.35s ease both;
 }
 
-.glb-status__dot {
-  width: 5px;
-  height: 5px;
+/* Swaps from cache finish in a frame or two; the delay keeps them from flashing. */
+.ring-loader--overlay {
+  animation-delay: 0.18s;
+}
+
+.ring-loader--overlay .ring-loader__mark {
+  width: 68px;
+  height: 68px;
+}
+
+.ring-loader__mark {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+}
+
+.ring-loader__mark svg {
+  position: relative;
+  width: 72%;
+  height: 72%;
+  overflow: visible;
+}
+
+/* Soft sapphire glow breathing behind the diamond. */
+.ring-loader__halo {
+  position: absolute;
+  inset: 0;
   border-radius: 999px;
-  background: var(--brand);
-  animation: pulse 1.6s ease-in-out infinite;
+  background: radial-gradient(circle, rgb(43 89 168 / 18%) 0%, rgb(43 89 168 / 0%) 68%);
+  animation: loader-breathe 2.4s ease-in-out infinite;
 }
 
-@keyframes pulse {
+.ring-loader__outline,
+.ring-loader__facets {
+  fill: none;
+  stroke: var(--brand);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+}
+
+.ring-loader__outline {
+  stroke-width: 2.4;
+  animation: loader-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.ring-loader__facets {
+  stroke-width: 1.1;
+  opacity: 0.55;
+  animation: loader-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) 0.25s infinite;
+}
+
+.ring-loader__star {
+  fill: var(--brand);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loader-twinkle 1.2s ease-in-out infinite;
+}
+
+.ring-loader__label {
+  margin: 0.2rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.ring-loader__track {
+  position: relative;
+  width: 168px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.ring-loader__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--brand);
+  transition: width 0.5s ease;
+}
+
+/* A glint running along the filled part, so a slow stage still reads as alive. */
+.ring-loader__fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 85%), transparent);
+  transform: translateX(-100%);
+  animation: loader-glint 1.4s ease-in-out infinite;
+}
+
+.ring-loader__pct {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes loader-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes loader-draw {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  45%,
+  60% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes loader-twinkle {
   0%,
   100% {
-    opacity: 0.25;
+    opacity: 0.35;
+    transform: scale(0.6) rotate(0deg);
   }
   50% {
     opacity: 1;
+    transform: scale(1.1) rotate(45deg);
+  }
+}
+
+@keyframes loader-breathe {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes loader-glint {
+  to {
+    transform: translateX(100%);
   }
 }
 
@@ -456,19 +642,26 @@
   display: grid;
   justify-items: center;
   gap: 0.4rem;
+  max-width: 34ch;
   padding: 2rem;
   text-align: center;
   color: var(--ink-soft);
 }
 
 .viewer-fallback p {
+  margin: 0.4rem 0 0;
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   color: var(--ink);
 }
 
 .viewer-fallback span {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.viewer-fallback .link-btn {
+  margin-top: 0.5rem;
 }
 
 .drag-hint {
@@ -693,50 +886,69 @@
 
 /* ------------------------------------------------------------- action bar */
 
+/* Two rows: the design on top, the actions full width beneath — side by side
+   the summary was crushed to a few characters in the ~480px column. */
 .action-bar {
   flex: none;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: clamp(0.75rem, 2vw, 1.4rem);
-  padding: 1rem clamp(1.15rem, 2.4vw, 2.2rem);
+  gap: 0.75rem;
+  padding: 0.9rem clamp(1.15rem, 2.4vw, 2.2rem) 1rem;
   border-top: 1px solid var(--line);
   background: var(--surface);
 }
 
-.action-bar__total {
+.action-bar__summary {
+  flex: 1 1 100%;
   display: grid;
-  gap: 0.1rem;
+  /* Label and SKU share the top row; the summary gets the full width below. */
+  grid-template-areas:
+    "label sku"
+    "summary summary";
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 1rem;
+  row-gap: 0.1rem;
   min-width: 0;
+  margin: 0;
 }
 
-.action-bar__total dt {
+.action-bar__summary dt {
+  grid-area: label;
   font-size: 0.6rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 
-.action-bar__total dd {
+.action-bar__summary dd {
+  grid-area: summary;
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.45rem, 2vw, 1.8rem);
-  line-height: 1.1;
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  line-height: 1.15;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.action-bar__break {
-  margin-top: 0.1rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--brand);
-  font-size: 0.62rem;
+.action-bar__sku {
+  grid-area: sku;
+  font-size: 0.6rem;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  justify-self: start;
+  color: var(--brand);
+}
+
+.action-bar__buttons {
+  flex: 1 1 100%;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-bar__buttons .btn--primary {
+  flex: 1;
 }
 
 .btn {
@@ -751,6 +963,8 @@
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background 0.2s ease,
@@ -759,20 +973,12 @@
 }
 
 .btn--primary {
-  margin-left: auto;
-  flex: 1;
-  max-width: 260px;
   background: var(--primary);
   color: var(--primary-foreground);
 }
 
 .btn--primary:hover {
   background: var(--brand-deep);
-}
-
-.btn--primary:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .btn--ghost {
@@ -782,7 +988,144 @@
 }
 
 .btn--ghost:hover {
-  border-color: var(--ink);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.btn--icon {
+  padding-inline: 1rem;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------- contact card */
+
+.contact-card {
+  margin-top: 2rem;
+  padding: 1.4rem 1.3rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 100% 0%, var(--brand-tint) 0%, rgb(232 238 248 / 0%) 55%),
+    var(--surface);
+}
+
+.contact-card__title {
+  margin: 0.45rem 0 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.contact-card__text {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.contact-card__list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-card__list a {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.74rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.contact-card__list a:hover {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.contact-card__list svg {
+  flex: none;
+  color: var(--brand);
+}
+
+.contact-card__list span {
+  display: grid;
+}
+
+.contact-card__list small {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.contact-card__offices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.contact-card__offices address {
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.72rem;
+  font-style: normal;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.contact-card__offices strong {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.contact-card__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin-top: 0.9rem;
+}
+
+.contact-card__social a {
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.contact-card__social a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* --------------------------------------------------------- sheet & drawer */
@@ -847,62 +1190,14 @@
   gap: 0.6rem;
 }
 
-/* price breakup rows */
-
-.price-breakup h4 {
-  margin: 1.15rem 0 0.5rem;
-  font-family: var(--font-body);
-  font-size: 0.64rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--brand);
+.sheet__foot--stack {
+  flex-direction: column;
 }
 
-.price-breakup h4:first-child {
-  margin-top: 0;
-}
-
-.price-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.38rem 0;
-  font-size: 0.8rem;
-  border-bottom: 1px dashed var(--line);
-}
-
-.price-row--muted {
-  color: var(--ink-soft);
-  font-size: 0.75rem;
-}
-
-.price-row:last-child {
-  border-bottom: 0;
-}
-
-.price-divider {
-  height: 1px;
-  margin: 0.9rem 0;
-  background: var(--line);
-}
-
-.price-note {
-  margin-top: 1rem;
-  font-size: 0.72rem;
-  line-height: 1.6;
-  color: var(--ink-soft);
-}
-
-.price-retry {
-  margin-top: 0.6rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--brand);
-  font-size: 0.72rem;
-  text-decoration: underline;
-  cursor: pointer;
+.sheet__foot-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
 }
 
 /* cart drawer */
@@ -931,12 +1226,14 @@
 
 .drawer-meta {
   font-size: 0.72rem;
+  line-height: 1.55;
   color: var(--ink-soft);
 }
 
-.drawer-price {
-  font-family: var(--font-display);
-  font-size: 1rem;
+.drawer-sku {
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  color: var(--brand);
 }
 
 .drawer-empty {
@@ -946,31 +1243,6 @@
   text-align: center;
   color: var(--ink-soft);
   font-size: 0.85rem;
-}
-
-.drawer-total {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-}
-
-/* ------------------------------------------------------------ whatsapp fab */
-
-.wa-fab {
-  position: fixed;
-  right: clamp(1rem, 2.5vw, 1.8rem);
-  bottom: clamp(1rem, 2.5vw, 1.8rem);
-  z-index: 40;
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: #1f8a4c;
-  color: #fff;
-  box-shadow: var(--shadow-soft);
 }
 
 /* ----------------------------------------------------------------- mobile */
@@ -987,8 +1259,10 @@
 }
 
 @media (max-width: 1024px) {
+  /* minmax(0, …), not 1fr: a bare 1fr track grows to its widest unbreakable
+     child, which pushed the page past the viewport on phones. */
   .studio__body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stage {
@@ -1038,9 +1312,37 @@
   }
 }
 
+@media (max-width: 860px) {
+  .topbar__note,
+  .nav-tag {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .brand img {
     height: 30px;
+  }
+
+  /* The contact card in the configuration column carries the same details. */
+  .topbar {
+    display: none;
+  }
+
+  .nav-link {
+    display: none;
+  }
+
+  .bag-btn {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .bag-btn__label {
+    display: none;
+  }
+
+  .contact-card__offices {
+    grid-template-columns: 1fr;
   }
 
   .stage__foot {
@@ -1051,14 +1353,9 @@
 }
 
 @media (max-width: 520px) {
-  .action-bar {
-    flex-wrap: wrap;
-  }
-
-  .btn--primary {
-    max-width: none;
-    width: 100%;
-    margin-left: 0;
+  /* Icon only: the enquiry button needs the width. */
+  .btn--icon .btn__text {
+    display: none;
   }
 }
 
@@ -1069,5 +1366,16 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Hold the loader still, fully drawn, instead of strobing at 0.01ms. */
+  .ring-loader *,
+  .ring-loader *::after {
+    animation: none !important;
+  }
+
+  .ring-loader__outline,
+  .ring-loader__facets {
+    stroke-dashoffset: 0;
   }
 }

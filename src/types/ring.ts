@@ -35,13 +35,6 @@ export interface RingConfiguration {
 
 export type ViewName = "front" | "side" | "top" | "angle";
 
-export interface SnapshotViews {
-  front: string;
-  side: string;
-  top: string;
-  angle: string;
-}
-
 export interface RingModelAssets {
   diamondPath: string;
   headPath: string;
@@ -58,7 +51,6 @@ export interface CartItem {
   title: string;
   configuration: RingConfiguration;
   selections: Record<string, string>;
-  totalPrice: number | null;
-  priceBreakup: unknown;
-  assets: SnapshotViews;
+  /** Design reference, so an enquiry can name the exact variant. */
+  sku: string;
 }

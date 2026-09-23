@@ -1,7 +1,10 @@
 import type { CartItem } from "@/types/ring";
-import { formatINR } from "@/utils/formatCurrency";
+import { mailtoLink, whatsappLink } from "@/data/contact";
+import { enquiryMessage } from "@/utils/enquiry";
+import { configUrl } from "@/utils/urlState";
+import { MailIcon, WhatsAppIcon } from "./ContactIcons";
 
-/** Shares the sheet chrome with the price breakup, so the two read as one system. */
+/** Shares the sheet chrome with the rest of the studio, so it reads as one system. */
 export function CartDrawer({
   open,
   items,
@@ -16,7 +19,9 @@ export function CartDrawer({
   onClear: () => void;
 }) {
   if (!open) return null;
-  const total = items.reduce((sum, i) => sum + (i.totalPrice ?? 0), 0);
+  const message = enquiryMessage(
+    items.map((item) => ({ ...item, link: configUrl(item.configuration) })),
+  );
 
   return (
     <>
@@ -45,10 +50,11 @@ export function CartDrawer({
                       .map(([k, v]) => `${k}: ${v}`)
                       .join(" · ")}
                   </p>
-                  <p className="drawer-price">{formatINR(item.totalPrice)}</p>
+                  {/* Optional: items saved before the SKU was stored have none. */}
+                  {item.sku && <p className="drawer-sku">{item.sku}</p>}
                   <button
                     type="button"
-                    className="price-retry"
+                    className="link-btn"
                     onClick={() => onRemove(item.id)}
                     aria-label={`Remove ${item.title}`}
                   >
@@ -61,14 +67,25 @@ export function CartDrawer({
         </div>
 
         {items.length > 0 && (
-          <div className="sheet__foot">
-            <div className="drawer-total">
-              <span>Total</span>
-              <strong>{formatINR(total)}</strong>
+          <div className="sheet__foot sheet__foot--stack">
+            <a
+              className="btn btn--primary btn--block"
+              href={whatsappLink(message)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <WhatsAppIcon />
+              Enquire about {items.length} {items.length === 1 ? "design" : "designs"}
+            </a>
+            <div className="sheet__foot-row">
+              <a className="btn btn--ghost" href={mailtoLink("Ring Studio enquiry", message)}>
+                <MailIcon />
+                Email
+              </a>
+              <button type="button" className="btn btn--ghost" onClick={onClear}>
+                Clear bag
+              </button>
             </div>
-            <button type="button" className="btn btn--ghost" onClick={onClear}>
-              Clear
-            </button>
           </div>
         )}
       </aside>

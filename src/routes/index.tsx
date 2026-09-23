@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RingViewer, type ViewerMode } from "@/components/RingViewer";
 import { RingThumbnails } from "@/components/RingThumbnails";
 import { CartDrawer } from "@/components/CartDrawer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ActionBar } from "@/components/ActionBar";
-import { PriceBreakup } from "@/components/PriceSummary";
+import { ContactCard } from "@/components/ContactCard";
 import {
   CrownSettingSelector,
   DiamondShapeSelector,
@@ -16,14 +16,16 @@ import {
   SideSettingSelector,
 } from "@/components/Selectors";
 import { useRingConfiguration } from "@/hooks/useRingConfiguration";
-import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import { useCart } from "@/hooks/useCart";
 import { DIAMOND_SHAPES, CARAT_STEPS } from "@/data/diamondOptions";
 import { RING_STYLES, SIDE_SETTINGS, CROWN_SETTINGS } from "@/data/ringOptions";
+import { whatsappLink } from "@/data/contact";
+import { enquiryMessage } from "@/utils/enquiry";
+import { configUrl } from "@/utils/urlState";
 
 const TITLE = "Custom Ring Studio | Starlink Jewels";
 const DESCRIPTION =
-  "Design your own engagement ring with Starlink Jewels: choose shape, carat, setting and metal with live pricing and a 360° preview.";
+  "Design your own engagement ring with Starlink Jewels: choose shape, carat, setting and metal in a real-time 3D preview, then enquire for a quote.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,11 +43,9 @@ export const Route = createFileRoute("/")({
 
 function RingBuilderPage() {
   const { configuration, assets, setConfiguration, title } = useRingConfiguration();
-  const { price, isLoading, error, retry } = usePriceCalculation(configuration);
   const { items, addItem, removeItem, clear, count } = useCart();
   const [mode, setMode] = useState<ViewerMode>("360");
   const [cartOpen, setCartOpen] = useState(false);
-  const [breakupOpen, setBreakupOpen] = useState(false);
   const [added, setAdded] = useState(false);
 
   const label = useCallback(
@@ -72,14 +72,29 @@ function RingBuilderPage() {
       title,
       configuration,
       selections,
-      totalPrice: price?.total ?? null,
-      priceBreakup: price,
-      assets: assets.views,
+      sku: assets.variantSku,
     });
     setAdded(true);
     setCartOpen(true);
     window.setTimeout(() => setAdded(false), 2400);
-  }, [addItem, title, configuration, selections, price, assets.views]);
+  }, [addItem, title, configuration, selections, assets.variantSku]);
+
+  // Read from window, so only after hydration: rendering it on the server
+  // would give the enquiry link a different href on each side.
+  const [shareUrl, setShareUrl] = useState("");
+  useEffect(() => setShareUrl(configUrl(configuration)), [configuration]);
+
+  const enquiryHref = useMemo(
+    () =>
+      whatsappLink(
+        enquiryMessage([
+          { title, selections, sku: assets.variantSku, link: shareUrl || undefined },
+        ]),
+      ),
+    [title, selections, assets.variantSku, shareUrl],
+  );
+
+  const summary = `${selections.Carat} ${selections.Shape} · ${selections.Metal}`;
 
   const props = { configuration, set: setConfiguration };
 
@@ -92,7 +107,6 @@ function RingBuilderPage() {
           <div className="stage__inner">
             <div className="stage__frame">
               <RingViewer
-                views={assets.views}
                 models={assets.models}
                 mode={mode}
                 metal={configuration.metal}
@@ -102,13 +116,13 @@ function RingBuilderPage() {
           </div>
           {/* Sibling of the stage, not a child of it: on desktop this is pinned
               beside the ring, on mobile it flows underneath. */}
-          <RingThumbnails views={assets.views} mode={mode} onSelect={setMode} />
+          <RingThumbnails mode={mode} onSelect={setMode} />
           <div className="stage__foot">
             <span>Real-time 3D</span>
             <i aria-hidden />
             <span>Made to order</span>
             <i aria-hidden />
-            <span>{assets.variantSku}</span>
+            <span>Certified diamonds</span>
           </div>
         </section>
 
@@ -140,45 +154,22 @@ function RingBuilderPage() {
               <MetalSelector {...props} />
               <MetalKaratAndSize {...props} />
             </div>
+
+            <ContactCard
+              enquiryHref={enquiryHref}
+              subject={`Ring Studio enquiry — ${assets.variantSku}`}
+            />
           </div>
 
           <ActionBar
-            price={price}
-            isLoading={isLoading}
-            error={error}
+            summary={summary}
+            sku={assets.variantSku}
             added={added}
-            onOpenBreakup={() => setBreakupOpen(true)}
+            enquiryHref={enquiryHref}
             onAddToCart={onAddToCart}
           />
         </section>
       </main>
-
-      {breakupOpen && (
-        <>
-          <button
-            type="button"
-            className="scrim"
-            aria-label="Close price breakup"
-            onClick={() => setBreakupOpen(false)}
-          />
-          <aside className="sheet" role="dialog" aria-label="Price breakup">
-            <div className="sheet__head">
-              <h2>Price breakup</h2>
-              <button
-                type="button"
-                className="sheet__close"
-                onClick={() => setBreakupOpen(false)}
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="sheet__body">
-              <PriceBreakup price={price} isLoading={isLoading} error={error} onRetry={retry} />
-            </div>
-          </aside>
-        </>
-      )}
 
       <CartDrawer
         open={cartOpen}

@@ -1,47 +1,13 @@
 /**
- * Public CloudFront snapshot resolver.
+ * Resolves the locally mirrored GLB parts for a configuration.
  *
- * Naming scheme discovered in the reference frontend bundle:
- *   https://d2hjryo06kt5wm.cloudfront.net/snapshots/ring-{previewSku}-{style}-{view}.jpg
- * where `style` is the metal name lowercased with spaces replaced by dashes,
- * and `previewSku` is built from the configuration exactly as the reference
- * store does:
- *   RS{ringStyle}_SS{sideSetting}_DS{diamondShape}_C{carat}_CS{crownSetting}_MC{metal}
+ * GLBs live under `public/data/` (public/data/manifest.json is the inventory),
+ * so the viewer renders entirely from this origin — there are no remote image
+ * or pricing services.
  */
-import type { RingConfiguration, RingModelAssets, SnapshotViews, ViewName } from "@/types/ring";
+import type { RingConfiguration, RingModelAssets } from "@/types/ring";
 
-export const CLOUDFRONT_BASE = "https://d2hjryo06kt5wm.cloudfront.net";
-/**
- * GLBs are mirrored locally under `public/data/` (public/data/manifest.json is
- * the inventory) so the 360 viewer renders without hitting the reference host.
- * Snapshots stay remote: the full snapshot matrix is ~9 GB, so those keep
- * coming from CloudFront above.
- */
 export const LOCAL_MODEL_BASE = "/data";
-
-export function getSnapshotUrl(id: string, style: string, view: string): string {
-  const normalizedStyle = style.toLowerCase().replace(/\s+/g, "-");
-  return `${CLOUDFRONT_BASE}/snapshots/ring-${id}-${normalizedStyle}-${view}.jpg`;
-}
-
-export function getSnapshotUrls(id: string, style: string): SnapshotViews {
-  return {
-    front: getSnapshotUrl(id, style, "front"),
-    side: getSnapshotUrl(id, style, "side"),
-    top: getSnapshotUrl(id, style, "top"),
-    angle: getSnapshotUrl(id, style, "angle"),
-  };
-}
-
-function slug(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/\//g, "-")
-    .replace(/\./g, "p")
-    .replace(/[^a-z0-9-]/g, "");
-}
 
 const MODEL_RING_STYLES: Record<RingConfiguration["ringStyle"], string> = {
   "classic-straight": "Straight",
@@ -122,8 +88,8 @@ export function getRingModelAssets(config: RingConfiguration): RingModelAssets {
 
   // A "No Halo" head carries no halo stones and a "Plain Gold" band no pave, so
   // the reference host ships no accent GLB for those combinations. Emitting the
-  // URL anyway makes <extra-model> 404 and tips the whole viewer into its image
-  // fallback, so resolve them to null instead.
+  // URL anyway makes the part 404 and tips the whole viewer into its error
+  // state, so resolve them to null instead.
   const hasHeadAccents = headStyle !== "No Halo";
   const hasBandAccents = sideSetting !== "Plain Gold";
 
@@ -138,19 +104,6 @@ export function getRingModelAssets(config: RingConfiguration): RingModelAssets {
       ? modelPath(...bandFolder, `${bandPrefix.join("_")}_Band_diamond.glb`)
       : null,
   };
-}
-
-/** Asset SKU used for snapshot lookups. */
-export function buildPreviewSku(config: RingConfiguration): string {
-  const carat = parseFloat(config.centerDiamondSize);
-  return [
-    `RS${slug(config.ringStyle)}`,
-    `SS${slug(config.sideSetting)}`,
-    `DS${slug(config.diamondShape)}`,
-    `C${slug(Number.isFinite(carat) ? String(carat) : config.centerDiamondSize)}`,
-    `CS${slug(config.crownSetting)}`,
-    `MC${slug(config.metal)}`,
-  ].join("_");
 }
 
 /** Commerce variant SKU used by the reference cart payload. */
@@ -176,14 +129,9 @@ export function buildVariantSku(config: RingConfiguration): string {
   return sku;
 }
 
-export const VIEW_ORDER: ViewName[] = ["front", "side", "top", "angle"];
-
 export function getRingAssets(config: RingConfiguration) {
-  const previewSku = buildPreviewSku(config);
   return {
-    previewSku,
     variantSku: buildVariantSku(config),
-    views: getSnapshotUrls(previewSku, config.metal),
     models: getRingModelAssets(config),
   };
 }

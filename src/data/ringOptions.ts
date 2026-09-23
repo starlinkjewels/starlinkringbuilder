@@ -52,5 +52,4 @@ export const DEFAULT_CONFIGURATION: RingConfiguration = {
   ringSize: "7",
 };
 
-export const WHATSAPP_NUMBER = "918000000000";
 export const BRAND_NAME = "Starlink Jewels";

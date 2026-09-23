@@ -243,10 +243,18 @@ export class RingRenderer {
   /**
    * Replace the model. Resolves once the new ring is on screen, or immediately
    * and silently if a newer setParts call has already superseded this one.
+   * `onPartLoaded` fires once per part as its GLB finishes, for load progress.
    */
-  async setParts(parts: RingPartSource[]): Promise<void> {
+  async setParts(parts: RingPartSource[], onPartLoaded?: () => void): Promise<void> {
     const generation = ++this.generation;
-    const loaded = await Promise.all(parts.map((part) => loadPartGeometry(part.url, part.role)));
+    const loaded = await Promise.all(
+      parts.map((part) =>
+        loadPartGeometry(part.url, part.role).then((entry) => {
+          if (generation === this.generation) onPartLoaded?.();
+          return entry;
+        }),
+      ),
+    );
     if (this.disposed || generation !== this.generation) return;
 
     this.clearRing();

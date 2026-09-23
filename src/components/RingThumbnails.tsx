@@ -1,4 +1,4 @@
-import type { SnapshotViews, ViewName } from "@/types/ring";
+import type { ViewName } from "@/types/ring";
 import { Rotate360Icon } from "./RingIcons";
 import type { ViewerMode } from "./RingViewer";
 
@@ -10,18 +10,17 @@ const VIEWS: { value: ViewName; label: string }[] = [
 ];
 
 /**
- * A rail beside the stage on desktop, a row beneath it on small screens.
+ * Camera presets for the 3D viewer: a rail beside the stage on desktop, a row
+ * beneath it on small screens.
  *
  * Deliberately outside the viewer rather than floating on top of it: sat over
- * the render the thumbnails covered the ring at exactly the width where the
- * ring was largest.
+ * the render the buttons covered the ring at exactly the width where the ring
+ * was largest.
  */
 export function RingThumbnails({
-  views,
   mode,
   onSelect,
 }: {
-  views: SnapshotViews;
   mode: ViewerMode;
   onSelect: (m: ViewerMode) => void;
 }) {
@@ -46,9 +45,9 @@ export function RingThumbnails({
           aria-selected={mode === view.value}
           onClick={() => onSelect(view.value)}
           aria-label={`${view.label} view`}
-          className={`thumb ${mode === view.value ? "thumb--selected" : ""}`}
+          className={`thumb thumb--label ${mode === view.value ? "thumb--selected" : ""}`}
         >
-          <img src={views[view.value]} alt="" loading="lazy" />
+          <span>{view.label}</span>
         </button>
       ))}
     </div>

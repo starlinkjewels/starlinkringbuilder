@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DEFAULT_CONFIGURATION } from "@/data/ringOptions";
 import type { RingConfiguration } from "@/types/ring";
 import { parseConfigFromUrl, writeConfigToUrl } from "@/utils/urlState";
-import { getRingAssets } from "@/api/snapshotAssets";
+import { getRingAssets } from "@/utils/ringAssets";
 import { buildRingName } from "@/utils/buildRingName";
 
 export function useRingConfiguration() {

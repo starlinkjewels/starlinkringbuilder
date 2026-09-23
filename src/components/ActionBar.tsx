@@ -1,51 +1,53 @@
-import type { PriceData } from "@/types/pricing";
-import { formatINR } from "@/utils/formatCurrency";
+import { BagIcon, WhatsAppIcon } from "./ContactIcons";
 
 /**
- * The total and the commitment, pinned to the bottom of the configuration
- * column so neither is ever scrolled away from.
+ * The current design and the two ways forward, pinned to the bottom of the
+ * configuration column so neither is ever scrolled away from. Enquiry leads:
+ * there is no online price, so a quote is the next step.
  */
 export function ActionBar({
-  price,
-  isLoading,
-  error,
+  summary,
+  sku,
   added,
-  onOpenBreakup,
+  enquiryHref,
   onAddToCart,
 }: {
-  price: PriceData | null;
-  isLoading: boolean;
-  error: string | null;
+  summary: string;
+  sku: string;
   added: boolean;
-  onOpenBreakup: () => void;
+  enquiryHref: string;
   onAddToCart: () => void;
 }) {
-  const total = price
-    ? formatINR(price.total)
-    : isLoading
-      ? "Calculating…"
-      : error
-        ? "Unavailable"
-        : "—";
-
   return (
     <div className="action-bar" data-testid="action-bar">
-      <dl className="action-bar__total">
-        <dt>Total</dt>
-        <dd data-testid="total-price">{total}</dd>
-        <button type="button" className="action-bar__break" onClick={onOpenBreakup}>
-          View price breakup
-        </button>
+      <dl className="action-bar__summary">
+        <dt>Your design</dt>
+        <dd data-testid="design-summary">{summary}</dd>
+        <span className="action-bar__sku">Ref {sku}</span>
       </dl>
-      <button
-        type="button"
-        className="btn btn--primary"
-        onClick={onAddToCart}
-        disabled={!price}
-        data-testid="add-to-cart"
-      >
-        {added ? "Added to bag" : "Add to bag"}
-      </button>
+      <div className="action-bar__buttons">
+        <button
+          type="button"
+          className="btn btn--ghost btn--icon"
+          onClick={onAddToCart}
+          data-testid="add-to-cart"
+          aria-label={added ? "Added to bag" : "Add to bag"}
+          title={added ? "Added to bag" : "Add to bag"}
+        >
+          <BagIcon size={17} />
+          <span className="btn__text">{added ? "Added" : "Add to bag"}</span>
+        </button>
+        <a
+          className="btn btn--primary"
+          href={enquiryHref}
+          target="_blank"
+          rel="noreferrer"
+          data-testid="enquire"
+        >
+          <WhatsAppIcon />
+          Enquire for price
+        </a>
+      </div>
     </div>
   );
 }

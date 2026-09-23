@@ -50,8 +50,9 @@ export function parseConfigFromUrl(search: string): Partial<RingConfiguration> {
   return out as Partial<RingConfiguration>;
 }
 
-export function writeConfigToUrl(config: RingConfiguration): void {
-  if (typeof window === "undefined") return;
+/** Shareable studio URL for a configuration; defaults are left out to keep it short. */
+export function configUrl(config: RingConfiguration): string {
+  if (typeof window === "undefined") return "";
   const url = new URL(window.location.href);
   for (const [key, param] of Object.entries(PARAM_MAP)) {
     const value = config[key as keyof RingConfiguration];
@@ -59,5 +60,10 @@ export function writeConfigToUrl(config: RingConfiguration): void {
     if (value && value !== fallback) url.searchParams.set(param, String(value));
     else url.searchParams.delete(param);
   }
-  window.history.replaceState({}, "", url.toString());
+  return url.toString();
+}
+
+export function writeConfigToUrl(config: RingConfiguration): void {
+  if (typeof window === "undefined") return;
+  window.history.replaceState({}, "", configUrl(config));
 }
