@@ -45,7 +45,7 @@ export function ActionBar({
           data-testid="enquire"
         >
           <WhatsAppIcon />
-          Enquire for price
+          <span className="btn__text">Enquire for price</span>
         </a>
       </div>
     </div>
